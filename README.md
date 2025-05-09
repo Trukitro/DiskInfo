@@ -65,8 +65,6 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 
 ---
 
----
-
 ## Executable Version
 
 ### Overview
