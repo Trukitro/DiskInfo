@@ -65,6 +65,46 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 
 ---
 
+---
+
+## Executable Version
+
+### Overview
+The `.exe` version of DiskInfo allows you to run the application without needing to install Python or any dependencies. It is a standalone executable file that simplifies usage for non-technical users.
+
+### Benefits
+- **No Dependencies**: No need to install Python or additional libraries.
+- **Portable**: Can be run directly on any Windows machine.
+- **Easy to Share**: Distribute the `.exe` file to others without requiring them to set up a Python environment.
+
+### How to Use
+1. **Download**:
+   - Go to the [Releases](https://github.com/Trukitro/DiskInfo/releases) section of the GitHub repository.
+   - Download the latest `.exe` file (e.g., `DiskInfo.exe`).
+
+2. **Run**:
+   - Double-click the `.exe` file to launch the application.
+
+3. **Explore Features**:
+   - Use the navigation sidebar to access the following features:
+     - **Drive Info**: Displays basic information about connected drives.
+     - **Health Status**: Monitors the health of your drives.
+     - **Partitions**: Provides detailed partition information.
+     - **Benchmark**: Tests the read/write speeds of your drives.
+
+### Notes
+- The `.exe` file is built using **PyInstaller**, which packages the Python application into a standalone executable.
+- Ensure you have the necessary permissions to run the file on your system.
+- If you encounter any issues, refer to the [Troubleshooting](#troubleshooting) section.
+
+### Example
+Here’s how the `.exe` file might look when running on a Windows system:
+
+```plaintext
+C:\Users\YourUsername\Downloads> DiskInfo.exe
+
+---
+
 ## Troubleshooting
 
 ### Common Issues
