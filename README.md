@@ -30,6 +30,22 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 
 ---
 
+## Screenshots
+
+### Drive Information
+![Drive Information](images/DriveInformation.png)
+
+### Drive Health Status
+![Drive Health Status](images/DriveHealthStatus.png)
+
+### Disk Management
+![Disk Management](images/DiskManagement.png)
+
+### Disk Benchmark
+![Disk Benchmark](images/DiskBenchmark.png)
+
+---
+
 ## Installation
 
 ### Prerequisites
