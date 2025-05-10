@@ -133,6 +133,7 @@ Here’s how the `.exe` file might look when running on a Windows system:
 
 ```plaintext
 C:\Users\YourUsername\Downloads> DiskInfo.exe
+```
 
 ---
 
