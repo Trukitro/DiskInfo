@@ -65,22 +65,27 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 
 2. Create and activate a virtual environment (optional but recommended):
 - **On Windows:**
-   ```python -m venv venv
+   ```
+   python -m venv venv
    venv\Scripts\activate
    ```
 - **On macOS/Linux:**
-   ```python3 -m venv venv
+   ```
+   python3 -m venv venv
    source venv/bin/activate
    ```
 3. Install the required dependencies:
-   ```pip install -r requirements.txt
+   ```
+   pip install -r requirements.txt
    ```
 4. Run the application:
-   ```python DiskInfov5.py
+   ```
+   python DiskInfov5.py
    ```
 5. (Optional) Build the .exe file:
 - **If you want to create a standalone executable file, use PyInstaller:**
-   ```pip install pyinstaller
+   ```
+   pip install pyinstaller
    pyinstaller --onefile DiskInfov5.py
    ```
 - **The .exe file will be located in the dist folder.**
