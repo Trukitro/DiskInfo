@@ -63,6 +63,29 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
    cd DiskInfo
    ```
 
+2. Create and activate a virtual environment (optional but recommended):
+- **On Windows:**
+   ```python -m venv venv
+   venv\Scripts\activate
+   ```
+- **On macOS/Linux:**
+   ```python3 -m venv venv
+   source venv/bin/activate
+   ```
+3. Install the required dependencies:
+   ```pip install -r requirements.txt
+   ```
+4. Run the application:
+   ```python DiskInfov5.py
+   ```
+5. (Optional) Build the .exe file:
+- **If you want to create a standalone executable file, use PyInstaller:**
+   ```pip install pyinstaller
+   pyinstaller --onefile DiskInfov5.py
+   ```
+- **The .exe file will be located in the dist folder.**
+
+
 ---
 
 ## Executable Version
@@ -83,7 +106,12 @@ The `.exe` version of DiskInfo allows you to run the application without needing
 2. **Run**:
    - Double-click the `.exe` file to launch the application.
 
-3. **Explore Features**:
+3. **Bypass Windows SmartScreen Warning**:
+   If you see the "Windows protected your PC" warning:
+   - Click **More Info**.
+   - Click **Run Anyway** to proceed.
+
+4. **Explore Features**:
    - Use the navigation sidebar to access the following features:
      - **Drive Info**: Displays basic information about connected drives.
      - **Health Status**: Monitors the health of your drives.
@@ -111,15 +139,22 @@ C:\Users\YourUsername\Downloads> DiskInfo.exe
    - If you encounter an error about missing libraries, ensure you have installed all required dependencies:
      ```bash
      pip install -r requirements.txt
-     ```
 
-2. **Permission Denied Errors**:
+     ```
+2. **Windows SmartScreen Warning**:
+   - If you see the "Windows protected your PC" warning when running the `.exe` file:
+     1. Click **More Info**.
+     2. Click **Run Anyway** to proceed.
+   - This warning appears because the `.exe` file is not signed with a trusted code signing certificate. It is safe to run if you downloaded it from the official [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
+
+
+3. **Permission Denied Errors**:
    - Run the application as an administrator if you encounter permission issues accessing certain drives.
 
-3. **SMART Data Not Available**:
+4. **SMART Data Not Available**:
    - Some drives may not support SMART data. Check your drive's specifications.
 
-4. **Benchmark Errors**:
+5. **Benchmark Errors**:
    - Ensure the drive is writable and has sufficient free space for the benchmark test.
 
 If you encounter other issues, feel free to open an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues).
