@@ -5,3 +5,15 @@
 import { WsClient } from "./ws-client.js";
 
 export const ws = new WsClient();
+
+// Caches the most recent "tick" payload so a view that just mounted (e.g.
+// Benchmark, checking current I/O activity before starting a run) can read
+// current state immediately instead of waiting for the next broadcast.
+let lastTick = null;
+ws.addEventListener("tick", (event) => {
+  lastTick = event.detail;
+});
+
+export function getLastTick() {
+  return lastTick;
+}

@@ -27,10 +27,12 @@ A FastAPI backend running inside a native (chromeless) desktop window, with a we
 
 ## Features
 
-- **Drive Info**: View basic information about all connected drives, including capacity and usage, updated live over a WebSocket.
-- **Health Status**: Monitor drive health using real SMART predictive-failure data where the storage driver exposes it.
-- **Partitions**: Examine detailed partition information in a Windows Disk Management-style interface.
-- **Benchmark**: Test drive read and write speeds with a live-updating chart, not just a final number.
+- **Drive Info**: Real HDD/SSD/NVMe classification and bus type (via the same Storage Management API Windows Settings uses, not a guess from the model name), capacity/usage, and a live per-drive read/write activity sparkline.
+- **Health Status**: SMART predictive-failure data where the driver exposes it, plus experimental SMART temperature.
+- **Partitions**: Detailed partition information in a Windows Disk Management-style interface.
+- **Benchmark**: Read/write speed test that bypasses the Windows page cache (`FILE_FLAG_NO_BUFFERING`) so results reflect the physical drive, not RAM -- configurable size (Quick/Standard/Thorough), a live chart, and local run history.
+- **Settings**: Poll interval, low-space threshold, notifications, and autostart, all editable in-app.
+- **Export**: CSV/JSON export of Drive Info, Health Status, and Partitions data.
 - **Light / Dark / System theme**: Switch appearance, or follow the OS.
 - **Tray icon + notifications**: Minimizes to the tray instead of quitting; native Windows toasts for low disk space or a predicted drive failure.
 

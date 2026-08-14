@@ -7,6 +7,7 @@ class HealthView extends HTMLElement {
       <div class="view-header">
         <h1>Drive Health Status</h1>
         <div class="view-actions">
+          <fluent-button id="export-btn" appearance="outline">Export</fluent-button>
           <fluent-button id="refresh-btn" appearance="outline">
             <svg width="14" height="14" slot="start"><use href="#icon-refresh"/></svg>
             Refresh
@@ -17,6 +18,9 @@ class HealthView extends HTMLElement {
     `;
 
     this.querySelector("#refresh-btn").addEventListener("click", () => this._load());
+    this.querySelector("#export-btn").addEventListener("click", () => {
+      window.open("/api/export?view=health&format=csv", "_blank");
+    });
     this._onTick = (event) => this._render(event.detail.health);
     ws.addEventListener("tick", this._onTick);
 
@@ -50,13 +54,14 @@ class HealthView extends HTMLElement {
         const badgeClass = entry.predicted_failure ? "danger" : "good";
         const badgeText = entry.predicted_failure ? "Warning" : "Healthy";
         const level = entry.predicted_failure ? "danger" : "good";
+        const temp = entry.temperature_c != null ? `${entry.temperature_c}&deg;C` : "--";
         return `
           <div class="card">
             <p class="card-title">
               <svg width="16" height="16"><use href="#icon-health"/></svg> ${escapeHtml(entry.model)}
               <span class="badge ${badgeClass}" style="margin-left:auto">${badgeText}</span>
             </p>
-            <p class="card-subtitle">${escapeHtml(entry.reason)}</p>
+            <p class="card-subtitle">${escapeHtml(entry.reason)} &middot; ${temp}</p>
             <div class="progress-track"><div class="progress-fill" data-level="${level}" style="width:${entry.health_percentage}%"></div></div>
           </div>`;
       })

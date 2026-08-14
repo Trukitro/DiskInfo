@@ -23,7 +23,10 @@ export const api = {
   drives: () => request("/drives"),
   health: () => request("/health"),
   partitions: () => request("/partitions"),
-  startBenchmark: (letter) => request(`/benchmark/${letter}`, { method: "POST" }),
+  startBenchmark: (letter, totalMb) => request(`/benchmark/${letter}?total_mb=${totalMb}`, { method: "POST" }),
+  benchmarkHistory: (letter) => request(`/benchmark/history?drive=${letter}`),
+  settings: () => request("/settings"),
+  updateSettings: (patch) => request("/settings", { method: "PUT", body: JSON.stringify(patch) }),
 };
 
 export function bytesToGB(bytes) {

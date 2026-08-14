@@ -42,19 +42,22 @@ toast notification types via `winotify` -- a drive crossing `low_space_pct`
 No configurable trigger engine like PulseGuard's; if that's wanted later it
 can reuse `backend/app/settings.py` as the place to add it.
 
-## Known limitation: benchmark read speed can be cache-inflated
+## Fixed in 6.1.0: benchmark read speed was cache-inflated
 
-`benchmark.py` writes then immediately reads back the same temp file using
-plain buffered I/O. On a lightly-loaded system, Windows can serve that read
-from the page cache instead of the physical drive, so the read number can
-come back far higher than the drive can actually sustain (observed: a
-mechanical HDD reporting >3000 MB/s read). This bug already existed in
-`DiskInfov5.py`'s `benchmark_drive()` -- not introduced by this rewrite.
-Write speed is unaffected and is the more trustworthy number for now. A
-real fix needs `FILE_FLAG_NO_BUFFERING` (sector-aligned reads/writes via
-`win32file`), left for a follow-up since it's real Windows API surface that
-needs testing against actual mixed HDD/SSD/NVMe hardware, not something to
-land untested in a tool that writes to the user's disks.
+`benchmark.py` used to write then immediately read back the same temp file
+with plain buffered I/O, so Windows could serve the read from the page
+cache instead of the physical drive (observed: a mechanical HDD reporting
+>3000 MB/s read). Fixed by opening the file with `FILE_FLAG_NO_BUFFERING`
+(sector-aligned via `mmap.mmap(-1, size)`, which is page/sector-aligned on
+Windows for free) so both phases hit the physical media. Verified against
+this project's own mixed HDD/NVMe hardware: the same drive that used to
+report an impossible >3000 MB/s now reports ~100 MB/s, in line with a
+7200RPM HDD's real sustained throughput.
+
+Falls back to the old buffered path (with `cache_bypassed: false` on the
+`done` event, surfaced in the UI) if `FILE_FLAG_NO_BUFFERING` is rejected
+by an unusual filesystem or virtual disk -- an honest caveat instead of a
+hard failure.
 
 ## Explicitly out of scope for this rewrite
 
@@ -63,10 +66,29 @@ not implemented:
 
 - Partition resizing/creation/deletion, file system conversion
 - Disk cloning, partition backup/recovery, deleted-file recovery
-- Export to CSV/JSON/PDF, automated periodic reports
+- **Reporting**: PDF-formatted reports, automated/scheduled report
+  generation, delivery to an external server. A plain CSV/JSON export of
+  data already shown on screen is *not* covered by this exclusion -- see
+  below.
 - Network/NAS drive monitoring, cloud backup integration
 - CLI mode, scripting/automation API
 - Drive encryption, secure erase
 - Multi-language / localization support
 - Linux/macOS support (the WMI-based `drives.py`/`health.py`/`partitions.py`
   are Windows-only by design, same as before)
+
+### Scope clarification: export vs. reporting
+
+The original "Export to CSV/JSON/PDF, automated periodic reports" exclusion
+bundled two different things together. Resolved as of the roadmap review
+after v6.0.0:
+
+- **In scope**: a plain CSV/JSON export button for data already rendered in
+  a view (drives, health, partitions) -- no formatting engine, no schedule,
+  no delivery mechanism, just "write out what's on screen."
+- **In scope**: a diagnostic snapshot for support requests (specs + SMART +
+  space + config bundled into one file to attach to a GitHub issue) -- this
+  is a troubleshooting tool, not a reporting feature, even though it also
+  produces a file.
+- **Still out of scope**: PDF/formatted reports, anything scheduled or
+  automated, anything sent somewhere on the user's behalf.

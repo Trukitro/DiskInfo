@@ -5,6 +5,8 @@ import {
   fluentSelect,
   fluentOption,
   fluentDivider,
+  fluentSwitch,
+  fluentTextField,
   accentBaseColor,
   baseLayerLuminance,
   StandardLuminance,
@@ -19,9 +21,18 @@ import "./components/drive-view.js";
 import "./components/health-view.js";
 import "./components/partitions-view.js";
 import "./components/benchmark-view.js";
+import "./components/settings-view.js";
 import "./components/about-view.js";
 
-provideFluentDesignSystem().register(fluentButton(), fluentCard(), fluentSelect(), fluentOption(), fluentDivider());
+provideFluentDesignSystem().register(
+  fluentButton(),
+  fluentCard(),
+  fluentSelect(),
+  fluentOption(),
+  fluentDivider(),
+  fluentSwitch(),
+  fluentTextField()
+);
 
 // DiskInfo's own teal, not PulseGuard's blue -- Fluent components pick up
 // this accent for the same controls (buttons, selects) our hand-rolled CSS
@@ -46,6 +57,7 @@ const NAV_ITEMS = [
   { id: "health", label: "Health Status", icon: "icon-health", tag: "health-view" },
   { id: "partitions", label: "Partitions", icon: "icon-partitions", tag: "partitions-view" },
   { id: "benchmark", label: "Benchmark", icon: "icon-benchmark", tag: "benchmark-view" },
+  { id: "settings", label: "Settings", icon: "icon-settings", tag: "settings-view" },
   { id: "about", label: "About", icon: "icon-info", tag: "about-view" },
 ];
 

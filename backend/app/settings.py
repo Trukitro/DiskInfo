@@ -24,6 +24,12 @@ class Settings:
     low_space_pct: float = 90.0
     notifications_enabled: bool = True
     port: int = 8745
+    # Ground truth for autostart is the registry (see autostart.py) -- this
+    # field just mirrors it into the same settings.json so the rest of the
+    # app (and the Settings UI) has one place to read every preference from,
+    # instead of each new toggle inventing its own persistence.
+    autostart: bool = False
+    last_selected_drive: str | None = None
 
 
 def load_settings(path: Path = SETTINGS_PATH) -> Settings:

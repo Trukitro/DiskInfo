@@ -6,6 +6,7 @@ class PartitionsView extends HTMLElement {
       <div class="view-header">
         <h1>Disk Management</h1>
         <div class="view-actions">
+          <fluent-button id="export-btn" appearance="outline">Export</fluent-button>
           <fluent-button id="refresh-btn" appearance="outline">
             <svg width="14" height="14" slot="start"><use href="#icon-refresh"/></svg>
             Refresh
@@ -15,6 +16,9 @@ class PartitionsView extends HTMLElement {
       <div id="disks"><div class="empty-state">Loading partition layout&hellip;</div></div>
     `;
     this.querySelector("#refresh-btn").addEventListener("click", () => this._load());
+    this.querySelector("#export-btn").addEventListener("click", () => {
+      window.open("/api/export?view=partitions&format=csv", "_blank");
+    });
     this._load();
   }
 
