@@ -1,0 +1,392 @@
+/* Layout: sidebar de navegación + vista activa, mismo patrón app-shell que
+   PulseGuard/CuentaClara. */
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 232px 1fr;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.sidebar {
+  background: var(--bg-elevated);
+  border-right: 1px solid var(--border);
+  padding: var(--space-5) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+.sidebar-brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: 0 var(--space-2);
+  margin-bottom: var(--space-6);
+}
+
+.sidebar-brand .logo-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  flex-shrink: 0;
+}
+
+.sidebar-brand .brand-name {
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text-primary);
+}
+
+.nav-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+
+.nav-item:hover {
+  background: var(--surface-alt);
+  color: var(--text-primary);
+}
+
+.nav-item.active {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.nav-icon {
+  flex-shrink: 0;
+}
+
+.sidebar-footer {
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+#app-version {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+  padding: 0 var(--space-2);
+}
+
+.theme-toggle {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-alt);
+  border-radius: var(--radius-md);
+}
+
+.theme-toggle button {
+  flex: 1;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 600;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.theme-toggle button.active {
+  background: var(--surface);
+  color: var(--accent);
+  box-shadow: var(--shadow-card);
+}
+
+/* Vista activa */
+
+.view-root {
+  overflow-y: auto;
+  padding: var(--space-6);
+}
+
+.view-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+}
+
+.view-header h1 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0;
+}
+
+.view-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+#live-indicator {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+
+#live-indicator .dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+
+#live-indicator[data-state="stale"] .dot {
+  background: var(--warn);
+}
+
+#live-indicator[data-state="disconnected"] .dot {
+  background: var(--danger);
+}
+
+/* Tarjetas */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-card);
+}
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.card-title {
+  font-size: 14px;
+  font-weight: 600;
+  margin: 0 0 var(--space-1);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.card-subtitle {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin: 0 0 var(--space-3);
+}
+
+.card-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12px;
+  color: var(--text-secondary);
+  padding: 3px 0;
+}
+
+.card-row strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.empty-state {
+  color: var(--text-tertiary);
+  font-size: 13px;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+/* Barra de progreso (uso de disco) */
+
+.progress-track {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--surface-alt);
+  overflow: hidden;
+  margin-top: var(--space-2);
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  background: var(--accent);
+  transition: width 0.3s ease;
+}
+
+.progress-fill[data-level="warn"] {
+  background: var(--warn);
+}
+
+.progress-fill[data-level="danger"] {
+  background: var(--danger);
+}
+
+/* Badges (salud) */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 9px;
+  border-radius: 999px;
+}
+
+.badge.good {
+  color: var(--good);
+  background: var(--good-bg);
+}
+
+.badge.warn {
+  color: var(--warn);
+  background: var(--warn-bg);
+}
+
+.badge.danger {
+  color: var(--danger);
+  background: var(--danger-bg);
+}
+
+/* Particiones -- barra tipo Administración de Discos */
+
+.disk-block {
+  margin-bottom: var(--space-6);
+}
+
+.disk-block-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: var(--space-2);
+}
+
+.disk-block-header h3 {
+  font-size: 14px;
+  margin: 0;
+}
+
+.disk-block-header span {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.partition-track {
+  display: flex;
+  height: 56px;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.partition-segment {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  font-size: 10px;
+  font-weight: 600;
+  color: #fff;
+  background: var(--accent);
+  border-right: 1px solid var(--bg);
+  min-width: 40px;
+  text-align: center;
+  padding: 2px;
+  overflow: hidden;
+}
+
+.partition-segment:last-child {
+  border-right: none;
+}
+
+.partition-segment.unallocated {
+  background: repeating-linear-gradient(
+    45deg,
+    var(--surface-alt),
+    var(--surface-alt) 6px,
+    var(--border) 6px,
+    var(--border) 12px
+  );
+  color: var(--text-tertiary);
+}
+
+.partition-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: var(--space-3);
+  font-size: 12px;
+}
+
+.partition-table th {
+  text-align: left;
+  color: var(--text-tertiary);
+  font-weight: 600;
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.partition-table td {
+  padding: var(--space-2);
+  border-bottom: 1px solid var(--border);
+  color: var(--text-secondary);
+}
+
+/* Benchmark */
+
+.benchmark-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-5);
+}
+
+.benchmark-results {
+  display: flex;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.benchmark-stat {
+  flex: 1;
+  text-align: center;
+}
+
+.benchmark-stat .value {
+  font-size: 26px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+}
+
+.benchmark-stat .label {
+  font-size: 11px;
+  color: var(--text-tertiary);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.chart-wrap {
+  position: relative;
+  height: 260px;
+}

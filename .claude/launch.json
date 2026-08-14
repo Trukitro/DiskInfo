@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "diskinfo-dev",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "app.main:app", "--reload", "--app-dir", "backend", "--port", "8745"],
+      "port": 8745
+    }
+  ]
+}

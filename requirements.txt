@@ -1,4 +1,0 @@
-customtkinter
-psutil
-pillow
-pywin32

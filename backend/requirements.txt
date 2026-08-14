@@ -1,0 +1,8 @@
+fastapi>=0.110
+uvicorn[standard]>=0.29
+psutil>=5.9
+pywin32>=306
+pywebview>=5.1
+pystray>=0.19
+winotify>=1.1
+Pillow>=10.0

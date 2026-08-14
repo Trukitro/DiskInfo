@@ -1,0 +1,127 @@
+/* DiskInfo -- sistema de diseño propio, en la misma familia de convenciones
+   que PulseGuard/CuentaClara (tokens CSS, escala de espaciado/radio, Segoe
+   UI Variable) pero con identidad propia: acento turquesa/"plato de disco"
+   en vez del azul de PulseGuard o el acento cálido de CuentaClara, y con
+   soporte real de tema claro/oscuro (DiskInfo v5 ya tenía ese toggle).
+   Combinaciones texto/fondo elegidas para pasar WCAG AA (>=4.5:1) en texto
+   normal en ambos temas -- --accent es un teal oscuro (#0f766e) precisamente
+   porque el teal brillante de marca (#2dd4bf, usado como --accent-bright
+   para texto/íconos sobre superficies oscuras) no alcanza 4.5:1 con texto
+   blanco encima. */
+
+:root {
+  --font-sans: "Segoe UI Variable", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "Cascadia Code", "JetBrains Mono", ui-monospace, monospace;
+
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.08), 0 4px 16px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0 2px 4px rgba(0, 0, 0, 0.1), 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* Modo claro (default) */
+  --bg: #f4f7f7;
+  --bg-elevated: #ffffff;
+  --surface: #ffffff;
+  --surface-alt: #eaf0ef;
+  --border: #dde6e5;
+  --border-strong: #c7d3d2;
+  --text-primary: #16211f;
+  --text-secondary: #5c6b6a;
+  --text-tertiary: #798a89;
+
+  --accent: #0f766e;
+  --accent-hover: #0c5f58;
+  --accent-bright: #14b8a6;
+  --accent-bg: #e1f5f2;
+
+  --good: #16a34a;
+  --good-bg: #e4f5ea;
+  --warn: #b45309;
+  --warn-bg: #fbecd9;
+  --danger: #b91c1c;
+  --danger-bg: #fbe8e8;
+
+  color-scheme: light;
+}
+
+:root[data-theme="dark"] {
+  --bg: #0a1420;
+  --bg-elevated: #0f1c2c;
+  --surface: rgba(255, 255, 255, 0.045);
+  --surface-alt: rgba(255, 255, 255, 0.03);
+  --border: rgba(255, 255, 255, 0.09);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --text-primary: #eef3f7;
+  --text-secondary: #93a4b8;
+  --text-tertiary: #6c7d91;
+
+  --accent: #14b8a6;
+  --accent-hover: #2dd4bf;
+  --accent-bright: #2dd4bf;
+  --accent-bg: rgba(20, 184, 166, 0.14);
+
+  --good: #4ade80;
+  --good-bg: rgba(74, 222, 128, 0.14);
+  --warn: #fbbf24;
+  --warn-bg: rgba(251, 191, 36, 0.14);
+  --danger: #f87171;
+  --danger-bg: rgba(248, 113, 113, 0.14);
+
+  color-scheme: dark;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0a1420;
+    --bg-elevated: #0f1c2c;
+    --surface: rgba(255, 255, 255, 0.045);
+    --surface-alt: rgba(255, 255, 255, 0.03);
+    --border: rgba(255, 255, 255, 0.09);
+    --border-strong: rgba(255, 255, 255, 0.16);
+    --text-primary: #eef3f7;
+    --text-secondary: #93a4b8;
+    --text-tertiary: #6c7d91;
+
+    --accent: #14b8a6;
+    --accent-hover: #2dd4bf;
+    --accent-bright: #2dd4bf;
+    --accent-bg: rgba(20, 184, 166, 0.14);
+
+    --good: #4ade80;
+    --good-bg: rgba(74, 222, 128, 0.14);
+    --warn: #fbbf24;
+    --warn-bg: rgba(251, 191, 36, 0.14);
+    --danger: #f87171;
+    --danger-bg: rgba(248, 113, 113, 0.14);
+
+    color-scheme: dark;
+  }
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+}

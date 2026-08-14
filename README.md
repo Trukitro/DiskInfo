@@ -1,6 +1,12 @@
-# DiskInfo
+<p align="center">
+  <img src="assets/logo.png" alt="DiskInfo logo" width="140">
+</p>
 
-DiskInfo is a comprehensive disk management and monitoring tool that provides detailed information about your storage devices. It helps you monitor disk health, performance, and usage, and includes features like benchmarking and partition management.
+<h1 align="center">DiskInfo</h1>
+
+DiskInfo is a comprehensive disk management and monitoring tool that provides detailed information about your storage devices. It helps you monitor disk health, performance, and usage, and includes features like live benchmarking and partition management.
+
+A FastAPI backend running inside a native (chromeless) desktop window, with a web frontend -- same architecture as [PulseGuard](https://github.com/Trukitro/PulseGuard) and [CuentaClara](https://github.com/Trukitro/CuentaClara).
 
 ---
 
@@ -9,12 +15,11 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 - [Installation](#installation)
 - [Usage](#usage)
 - [Screenshots](#screenshots)
+- [Architecture](#architecture)
 - [Changelog](#changelog)
 - [Creator](#creator)
-- [Contributing](#contributing)
 - [License](#license)
 - [Troubleshooting](#troubleshooting)
-- [Advanced Usage](#advanced-usage)
 - [Roadmap](#roadmap)
 - [Acknowledgments](#acknowledgments)
 
@@ -22,180 +27,117 @@ DiskInfo is a comprehensive disk management and monitoring tool that provides de
 
 ## Features
 
-- **Drive Info**: View basic information about all connected drives, including capacity and usage.
-- **Health Status**: Monitor drive health using SMART data and predict potential failures.
+- **Drive Info**: View basic information about all connected drives, including capacity and usage, updated live over a WebSocket.
+- **Health Status**: Monitor drive health using real SMART predictive-failure data where the storage driver exposes it.
 - **Partitions**: Examine detailed partition information in a Windows Disk Management-style interface.
-- **Benchmark**: Test drive read and write speeds with a built-in benchmarking tool.
-- **Dark Mode**: Switch between light and dark themes for better usability.
-
----
-
-## Screenshots
-
-### Drive Information
-![Drive Information](images/DriveInformation.png)
-
-### Drive Health Status
-![Drive Health Status](images/DriveHealthStatus.png)
-
-### Disk Management
-![Disk Management](images/DiskManagement.png)
-
-### Disk Benchmark
-![Disk Benchmark](images/DiskBenchmark.png)
+- **Benchmark**: Test drive read and write speeds with a live-updating chart, not just a final number.
+- **Light / Dark / System theme**: Switch appearance, or follow the OS.
+- **Tray icon + notifications**: Minimizes to the tray instead of quitting; native Windows toasts for low disk space or a predicted drive failure.
 
 ---
 
 ## Installation
 
-### Prerequisites
-- Python 3.10 or higher
-- Required Python libraries:
-  - `customtkinter`
-  - `psutil`
-  - `win32com.client`
-  - `Pillow`
+### Option A -- installer (recommended)
+1. Go to the [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
+2. Download and run the latest `DiskInfoSetup.exe`.
+3. If Windows SmartScreen warns you (the installer isn't code-signed), click **More info** → **Run anyway**.
 
-### Steps
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/Trukitro/DiskInfo.git
-   cd DiskInfo
-   ```
+### Option B -- run from source
 
-2. Create and activate a virtual environment (optional but recommended):
-- **On Windows:**
-   ```
-   python -m venv venv
-   venv\Scripts\activate
-   ```
-- **On macOS/Linux:**
-   ```
-   python3 -m venv venv
-   source venv/bin/activate
-   ```
-3. Install the required dependencies:
-   ```
-   pip install -r requirements.txt
-   ```
-4. Run the application:
-   ```
-   python DiskInfov5.py
-   ```
-5. (Optional) Build the .exe file:
-- **If you want to create a standalone executable file, use PyInstaller:**
-   ```
-   pip install pyinstaller
-   pyinstaller --onefile DiskInfov5.py
-   ```
-- **The .exe file will be located in the dist folder.**
+**Prerequisites**
+- Python 3.10+
+- Windows (the drive/health/partition modules use WMI and are Windows-only)
 
+**Steps**
+```bash
+git clone https://github.com/Trukitro/DiskInfo.git
+cd DiskInfo
+python -m venv venv
+venv\Scripts\activate
+pip install -r backend/requirements.txt
+python backend/run.py
+```
+
+**Build a standalone .exe**
+```bash
+cd backend
+pip install pyinstaller
+pyinstaller diskinfo.spec --noconfirm
+```
+The app will be in `backend/dist/DiskInfo/`.
 
 ---
 
-## Executable Version
+## Usage
 
-### Overview
-The `.exe` version of DiskInfo allows you to run the application without needing to install Python or any dependencies. It is a standalone executable file that simplifies usage for non-technical users.
+Launch the app (installed shortcut, or `python backend/run.py`) and use the sidebar to switch between Drive Info, Health Status, Partitions, and Benchmark. Closing the window minimizes DiskInfo to the tray; use the tray icon's **Exit** to actually quit.
 
-### Benefits
-- **No Dependencies**: No need to install Python or additional libraries.
-- **Portable**: Can be run directly on any Windows machine.
-- **Easy to Share**: Distribute the `.exe` file to others without requiring them to set up a Python environment.
-
-### How to Use
-1. **Download**:
-   - Go to the [Releases](https://github.com/Trukitro/DiskInfo/releases) section of the GitHub repository.
-   - Download the latest `.exe` file (e.g., `DiskInfo.exe`).
-
-2. **Run**:
-   - Double-click the `.exe` file to launch the application.
-
-3. **Bypass Windows SmartScreen Warning**:
-   If you see the "Windows protected your PC" warning:
-   - Click **More Info**.
-   - Click **Run Anyway** to proceed.
-
-4. **Explore Features**:
-   - Use the navigation sidebar to access the following features:
-     - **Drive Info**: Displays basic information about connected drives.
-     - **Health Status**: Monitors the health of your drives.
-     - **Partitions**: Provides detailed partition information.
-     - **Benchmark**: Tests the read/write speeds of your drives.
-
-### Notes
-- The `.exe` file is built using **PyInstaller**, which packages the Python application into a standalone executable.
-- Ensure you have the necessary permissions to run the file on your system.
-- If you encounter any issues, refer to the [Troubleshooting](#troubleshooting) section.
-
-### Example
-Here’s how the `.exe` file might look when running on a Windows system:
-
-```plaintext
-C:\Users\YourUsername\Downloads> DiskInfo.exe
+### Dev mode (frontend only, no pywebview window)
+```bash
+python -m uvicorn app.main:app --reload --app-dir backend --port 8745
 ```
+Then open `http://127.0.0.1:8745/` in any browser. Useful for iterating on the frontend without rebuilding the native window each time.
+
+---
+
+## Screenshots
+
+The screenshots from the old `customtkinter` app were removed since they no longer
+match the rewritten UI. Run the app (see [Usage](#usage)) to see the current
+Drive Info / Health Status / Partitions / Benchmark views -- fresh screenshots
+are on the list to add back here.
+
+---
+
+## Architecture
+
+```
+backend/    FastAPI app + pywebview shell (drives/health/partitions/benchmark logic, tray, notifications)
+frontend/   Static HTML/CSS/JS UI served by the backend (Fluent UI web components, Chart.js)
+installer/  Inno Setup script
+assets/     App icon (icon.ico) and README logo (logo.png)
+```
+
+See [DiskInfo-project-plan.md](DiskInfo-project-plan.md) for the reasoning behind these choices and what's deliberately out of scope.
+
+---
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md).
+
+---
+
+## Creator
+
+Created by EtchTechnologies ([Rikion](https://github.com/Trukitro)).
 
 ---
 
 ## Troubleshooting
 
-### Common Issues
+1. **Missing dependencies when running from source**: `pip install -r backend/requirements.txt`.
+2. **Windows SmartScreen warning**: click **More info** → **Run anyway**. The installer isn't code-signed but is safe if downloaded from the official [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
+3. **Permission errors accessing a drive**: some drives (e.g. system-protected volumes) may need the app run as administrator.
+4. **No SMART data for a drive**: not every drive/driver exposes `MSStorageDriver_FailurePredictStatus`; DiskInfo falls back to the drive's basic WMI status in that case.
+5. **Benchmark fails**: make sure the selected drive is writable and has at least 200MB free.
 
-1. **Missing Dependencies**:
-   - If you encounter an error about missing libraries, ensure you have installed all required dependencies:
-     ```bash
-     pip install -r requirements.txt
-
-     ```
-2. **Windows SmartScreen Warning**:
-   - If you see the "Windows protected your PC" warning when running the `.exe` file:
-     1. Click **More Info**.
-     2. Click **Run Anyway** to proceed.
-   - This warning appears because the `.exe` file is not signed with a trusted code signing certificate. It is safe to run if you downloaded it from the official [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
-
-
-3. **Permission Denied Errors**:
-   - Run the application as an administrator if you encounter permission issues accessing certain drives.
-
-4. **SMART Data Not Available**:
-   - Some drives may not support SMART data. Check your drive's specifications.
-
-5. **Benchmark Errors**:
-   - Ensure the drive is writable and has sufficient free space for the benchmark test.
-
-If you encounter other issues, feel free to open an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues).
-
----
-
-## Advanced Usage
-
-### Debug Mode
-Run the application in debug mode to see detailed logs:
-```bash
-python DiskInfov5.py --debug
-```
+If you hit something else, open an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues).
 
 ---
 
 ## Roadmap
 
-Here are some planned features and improvements for future releases:
-
-- Add support for monitoring network drives.
-- Export drive and partition information to CSV or JSON files.
-- Provide detailed SMART data reports for advanced users.
-- Add a notification system for drive health warnings.
-- Include multi-language support for international users.
-
-Feel free to suggest additional features by opening an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues).
+See the "Explicitly out of scope" section of [DiskInfo-project-plan.md](DiskInfo-project-plan.md) for the full list (partition resizing, disk cloning, export/reporting, network drives, CLI, encryption, localization, cross-platform support).
 
 ---
 
 ## Acknowledgments
 
-- [CustomTkinter](https://github.com/TomSchimansky/CustomTkinter) for the modern UI framework.
-- [Psutil](https://github.com/giampaolo/psutil) for system and disk information.
-- [Pillow](https://python-pillow.org/) for image handling.
+- [FastAPI](https://fastapi.tiangolo.com/) and [pywebview](https://pywebview.flowrl.com/) for the app shell.
+- [Fluent UI Web Components](https://github.com/microsoft/fluentui) and [Chart.js](https://www.chartjs.org/) for the frontend.
+- [psutil](https://github.com/giampaolo/psutil) and [pywin32](https://github.com/mhammond/pywin32) for system and disk information.
 - The Python community for their support and contributions.
 
 ---

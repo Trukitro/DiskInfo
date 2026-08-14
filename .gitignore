@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# PyInstaller build output
+backend/build/
+backend/dist/
+
+# Inno Setup
+installer/Output/
+installer/redist/
+
+# Per-user runtime config (written to %LOCALAPPDATA%\DiskInfo, never here,
+# but keep the pattern out just in case someone runs from a checkout dir)
+diskinfo_config.json
+
+# Editor/OS cruft
+.DS_Store
+Thumbs.db
