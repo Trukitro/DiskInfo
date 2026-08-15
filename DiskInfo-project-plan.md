@@ -83,6 +83,15 @@ removed for the same reason -- autostart is managed solely from the
 in-app Settings page now, since it has to run *after* the app is already
 elevated to create the scheduled task.
 
+**Fixed in 6.2.1: the installer itself couldn't launch the app.**
+`installer/diskinfo.iss`'s post-install "Launch DiskInfo" `[Run]` entry
+failed with `CreateProcess failed; code 740 (ERROR_ELEVATION_REQUIRED)` --
+Inno Setup's `[Run]` entries launch via `CreateProcess` by default, which
+cannot elevate a process; only `ShellExecute` can trigger the UAC prompt
+`requireAdministrator` needs. Fixed by adding the `shellexec` flag to that
+entry. Desktop/Start Menu shortcuts (`[Icons]`) were never affected --
+Explorer already launches `.lnk` targets via `ShellExecute` on double-click.
+
 ## Explicitly out of scope for this rewrite
 
 Carried over from the old `potential_future_features.txt` roadmap, still

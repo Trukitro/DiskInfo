@@ -64,7 +64,14 @@ Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: de
 
 [Run]
 Filename: "{tmp}\MicrosoftEdgeWebView2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing Microsoft WebView2 Runtime..."; Check: WebView2RuntimeMissing and FileExists(ExpandConstant('{tmp}\MicrosoftEdgeWebView2Setup.exe'))
-Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent
+; shellexec is required here, not optional -- [Run] entries launch via
+; CreateProcess by default, which cannot elevate a process. DiskInfo.exe's
+; requireAdministrator manifest (diskinfo.spec's uac_admin=True) needs
+; ShellExecute to trigger the UAC prompt; without this flag the post-install
+; "Launch DiskInfo" step fails outright with error 740 (ERROR_ELEVATION_REQUIRED)
+; instead of prompting. Desktop/Start Menu shortcuts in [Icons] don't need this --
+; Explorer already launches .lnk targets via ShellExecute on double-click.
+Filename: "{app}\{#MyAppExeName}"; Description: "Launch {#MyAppName}"; Flags: nowait postinstall skipifsilent shellexec
 
 [Code]
 function WebView2RuntimeMissing(): Boolean;

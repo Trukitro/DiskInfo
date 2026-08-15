@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [6.2.1] - 2026-08-15
+
+### Fixed
+
+- **The 6.2.0 installer couldn't finish installing.** Its post-install
+  "Launch DiskInfo" step failed with `CreateProcess failed; code 740
+  (The requested operation requires elevation)`, because Inno Setup's
+  `[Run]` entries launch via `CreateProcess` by default, which can't
+  elevate a process -- and 6.2.0 made `DiskInfo.exe` always require
+  elevation. Fixed by adding the `shellexec` flag to that entry, so it
+  launches via `ShellExecute` (which can trigger the UAC prompt) instead.
+  Desktop/Start Menu shortcuts were never affected by this.
+
 ## [6.2.0] - 2026-08-14
 
 ### Fixed

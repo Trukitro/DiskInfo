@@ -53,6 +53,16 @@ queda para la siguiente release.
 
 ---
 
+## Release 6.2.1 -- shipped 2026-08-15
+
+Bug report real del usuario, esta vez sobre el propio instalador de 6.2.0:
+fallaba con `CreateProcess failed; code 740 (elevación requerida)` al
+intentar lanzar DiskInfo al terminar la instalación. Causa: los entries de
+`[Run]` en Inno Setup usan `CreateProcess` por defecto, que no puede
+elevar un proceso -- y 6.2.0 hizo que `DiskInfo.exe` siempre requiera
+elevación. Fix: flag `shellexec` en ese entry. Ver `CHANGELOG.md` [6.2.1]
+y "Why DiskInfo runs elevated" en `DiskInfo-project-plan.md` para el detalle.
+
 ## Release 6.2.0 -- shipped 2026-08-14
 
 Bug report real del usuario (benchmark fallando con `Permission denied` en
