@@ -14,6 +14,10 @@ class SettingsView extends HTMLElement {
           <fluent-text-field id="low-space" type="number"></fluent-text-field>
         </div>
         <div class="settings-row">
+          <label for="temp-alert">Temperature alert (&deg;C, blank to disable)</label>
+          <fluent-text-field id="temp-alert" type="number" placeholder="off"></fluent-text-field>
+        </div>
+        <div class="settings-row">
           <label for="notifications">Notifications</label>
           <fluent-switch id="notifications"></fluent-switch>
         </div>
@@ -36,6 +40,7 @@ class SettingsView extends HTMLElement {
 
     this._pollInterval = this.querySelector("#poll-interval");
     this._lowSpace = this.querySelector("#low-space");
+    this._tempAlert = this.querySelector("#temp-alert");
     this._notifications = this.querySelector("#notifications");
     this._autostart = this.querySelector("#autostart");
     this._port = this.querySelector("#port");
@@ -47,6 +52,7 @@ class SettingsView extends HTMLElement {
       const settings = await api.settings();
       this._pollInterval.value = settings.poll_interval_s;
       this._lowSpace.value = settings.low_space_pct;
+      this._tempAlert.value = settings.temperature_alert_c ?? "";
       this._notifications.checked = settings.notifications_enabled;
       this._autostart.checked = settings.autostart;
       this._port.value = settings.port;
@@ -58,9 +64,11 @@ class SettingsView extends HTMLElement {
   async _save() {
     this._status.textContent = "Saving…";
     try {
+      const tempAlertRaw = this._tempAlert.value.trim();
       const patch = {
         poll_interval_s: Number(this._pollInterval.value),
         low_space_pct: Number(this._lowSpace.value),
+        temperature_alert_c: tempAlertRaw === "" ? null : Number(tempAlertRaw),
         notifications_enabled: this._notifications.checked,
         autostart: this._autostart.checked,
         port: Number(this._port.value),

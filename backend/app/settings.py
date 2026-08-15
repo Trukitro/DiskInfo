@@ -30,6 +30,10 @@ class Settings:
     # instead of each new toggle inventing its own persistence.
     autostart: bool = False
     last_selected_drive: str | None = None
+    # None = alerting disabled (temperature isn't available on every drive
+    # anyway, see health.py's honest-None SMART parsing -- a threshold
+    # would silently never fire on those drives regardless).
+    temperature_alert_c: int | None = None
 
 
 def load_settings(path: Path = SETTINGS_PATH) -> Settings:

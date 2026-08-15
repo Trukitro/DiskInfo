@@ -31,16 +31,21 @@ class BenchmarkView extends HTMLElement {
       <div class="benchmark-results">
         <div class="benchmark-stat"><div class="value" id="write-avg">&ndash;</div><div class="label">Write MB/s</div></div>
         <div class="benchmark-stat"><div class="value" id="read-avg">&ndash;</div><div class="label">Read MB/s</div></div>
+        <div class="benchmark-stat"><div class="value" id="write-iops">&ndash;</div><div class="label">Write IOPS (4K)</div></div>
+        <div class="benchmark-stat"><div class="value" id="read-iops">&ndash;</div><div class="label">Read IOPS (4K)</div></div>
       </div>
+      <div id="underperforming-warning" class="card-subtitle" style="display:none;color:var(--warn);margin-top:calc(var(--space-3) * -1)"></div>
       <div class="card" style="margin-bottom: var(--space-4)">
         <div class="chart-wrap"><canvas id="benchmark-canvas"></canvas></div>
       </div>
       <div class="card">
         <p class="card-title">Recent runs</p>
+        <div style="overflow-x:auto">
         <table class="partition-table" id="history-table">
-          <thead><tr><th>Date</th><th>Write MB/s</th><th>Read MB/s</th><th>Size</th><th>Cache bypassed</th></tr></thead>
-          <tbody><tr><td colspan="5">No runs yet.</td></tr></tbody>
+          <thead><tr><th>Date</th><th>Write MB/s</th><th>Read MB/s</th><th>Write IOPS</th><th>Read IOPS</th><th>Size</th><th>Cache bypassed</th></tr></thead>
+          <tbody><tr><td colspan="7">No runs yet.</td></tr></tbody>
         </table>
+        </div>
       </div>
     `;
 
@@ -51,6 +56,9 @@ class BenchmarkView extends HTMLElement {
     this._busyWarning = this.querySelector("#busy-warning");
     this._writeAvg = this.querySelector("#write-avg");
     this._readAvg = this.querySelector("#read-avg");
+    this._writeIops = this.querySelector("#write-iops");
+    this._readIops = this.querySelector("#read-iops");
+    this._underperformingWarning = this.querySelector("#underperforming-warning");
     this._historyBody = this.querySelector("#history-table tbody");
     this._driveByLetter = new Map();
     this._activeDrive = null;
@@ -120,16 +128,18 @@ class BenchmarkView extends HTMLElement {
 
   _renderHistory(rows) {
     if (!rows.length) {
-      this._historyBody.innerHTML = `<tr><td colspan="5">No runs yet.</td></tr>`;
+      this._historyBody.innerHTML = `<tr><td colspan="7">No runs yet.</td></tr>`;
       return;
     }
     this._historyBody.innerHTML = rows
       .map(
         (r) => `
-        <tr>
+        <tr${r.underperforming ? ` title="${escapeHtml(r.underperforming_reason || "")}"` : ""}>
           <td>${new Date(r.ts * 1000).toLocaleString()}</td>
-          <td>${r.write_avg_mb_s}</td>
+          <td>${r.write_avg_mb_s}${r.underperforming ? " ⚠" : ""}</td>
           <td>${r.read_avg_mb_s}</td>
+          <td>${r.iops_write ?? "--"}</td>
+          <td>${r.iops_read ?? "--"}</td>
           <td>${r.total_mb} MB</td>
           <td>${r.cache_bypassed ? "Yes" : "No"}</td>
         </tr>`
@@ -155,6 +165,9 @@ class BenchmarkView extends HTMLElement {
     this._statusLabel.textContent = `Running benchmark on ${letter}:…`;
     this._writeAvg.textContent = "–";
     this._readAvg.textContent = "–";
+    this._writeIops.textContent = "–";
+    this._readIops.textContent = "–";
+    this._underperformingWarning.style.display = "none";
     this._chart.data.labels = [];
     this._chart.data.datasets[0].data = [];
     this._chart.data.datasets[1].data = [];
@@ -179,14 +192,22 @@ class BenchmarkView extends HTMLElement {
       this._chart.data.datasets[datasetIndex].data[data.chunk - 1] = data.speed_mb_s;
       this._chart.update();
       this._statusLabel.textContent = `${data.phase === "write" ? "Writing" : "Reading"}… (${data.chunk}/${data.of})`;
+    } else if (data.phase === "iops_write" || data.phase === "iops_read") {
+      this._statusLabel.textContent = `Testing random 4K ${data.phase === "iops_write" ? "write" : "read"} IOPS… (${data.op}/${data.of})`;
     } else if (data.phase === "fallback") {
       this._statusLabel.textContent = `Note: ${data.message}`;
     } else if (data.phase === "done") {
       this._writeAvg.textContent = data.write_avg_mb_s;
       this._readAvg.textContent = data.read_avg_mb_s;
+      this._writeIops.textContent = data.iops_write != null ? `${data.iops_write} (${data.avg_latency_write_ms}ms)` : "--";
+      this._readIops.textContent = data.iops_read != null ? `${data.iops_read} (${data.avg_latency_read_ms}ms)` : "--";
       this._statusLabel.textContent = data.cache_bypassed
         ? "Done -- measured against the physical drive (cache bypassed)."
         : "Done -- fell back to buffered I/O; read speed may be cache-inflated.";
+      if (data.underperforming) {
+        this._underperformingWarning.style.display = "block";
+        this._underperformingWarning.textContent = `⚠ ${data.underperforming_reason}`;
+      }
       this._runBtn.disabled = false;
       this._activeDrive = null;
       this._loadHistory();

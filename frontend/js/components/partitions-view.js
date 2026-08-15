@@ -58,6 +58,7 @@ class PartitionsView extends HTMLElement {
             (s) => `
               <tr>
                 <td>${escapeHtml(s.letter)}</td>
+                <td>Disk ${escapeHtml(disk.disk_number)}</td>
                 <td>${s.primary ? "Primary" : "Logical"}</td>
                 <td>${escapeHtml(s.filesystem || "Unknown")}</td>
                 <td>${bytesToGB(s.size)} GB</td>
@@ -74,8 +75,8 @@ class PartitionsView extends HTMLElement {
             </div>
             <div class="partition-track">${segments}</div>
             <table class="partition-table">
-              <thead><tr><th>Partition</th><th>Type</th><th>File System</th><th>Capacity</th><th>% Used</th></tr></thead>
-              <tbody>${rows || '<tr><td colspan="5">No mounted partitions.</td></tr>'}</tbody>
+              <thead><tr><th>Partition</th><th>Physical Disk</th><th>Type</th><th>File System</th><th>Capacity</th><th>% Used</th></tr></thead>
+              <tbody>${rows || '<tr><td colspan="6">No mounted partitions.</td></tr>'}</tbody>
             </table>
           </div>`;
       })

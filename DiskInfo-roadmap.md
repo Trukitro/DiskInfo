@@ -53,20 +53,68 @@ queda para la siguiente release.
 
 ---
 
+## Release 6.2.0 -- shipped 2026-08-14
+
+Bug report real del usuario (benchmark fallando con `Permission denied` en
+`C:`) llevó a la decisión de que DiskInfo corra siempre elevado, y de ahí
+se continuó con 14 ítems del backlog: el resto del núcleo P0 (secciones 1
+y 2), profundidad de salud (sección 3), un Dashboard que conecta todo
+(sección 11), y robustez continuada (sección 8). El treemap (sección 5)
+se dejó afuera a propósito -- su plan nunca se compartió con esta sesión.
+Ver `CHANGELOG.md` [6.2.0] para el detalle completo.
+
+- ✅ **Fix de elevación** (no estaba en la lista original, salió del bug
+  report): la app pide UAC en cada inicio; autostart migrado de la
+  registry Run key a un Scheduled Task (`/rl highest`), ya que Windows no
+  arranca de forma confiable un exe con manifest de elevación desde Run.
+- ✅ Disco de arranque marcado (Drive Info, Dashboard).
+- ✅ Benchmark de IOPS/latencia (4K random) sumado al throughput secuencial.
+- ✅ Detección de discos "underperforming" vs. su categoría esperada.
+- ⏳ Generación PCIe / controlador-chipset -- **investigado, no
+  implementado**: `Win32_SCSIControllerDevice` no resuelve de forma
+  confiable en el hardware real de este proyecto, y los controladores que
+  sí enumera Windows solo dan nombres genéricos ("Standard NVM Express
+  Controller"), no el chipset real. No vale la pena mostrar "Unknown"
+  siempre.
+- ✅ Historial de temperatura/salud en el tiempo (gráfico).
+- ✅ Umbral de alerta de temperatura configurable en Settings.
+- ✅ Tabla de atributos SMART crudos + estimado de TBW, para usuarios
+  avanzados (ambos con fallback honesto a "no disponible", igual que
+  temperatura).
+- ✅ Dashboard/Overview unificado como vista de entrada por defecto.
+- ✅ Tests de integración de WebSocket (FastAPI `TestClient`).
+- ✅ Logging a archivo (`diskinfo.log`, rotativo).
+- ✅ Linting (`ruff`) + CI (`.github/workflows/ci.yml`).
+- 🐛 **Bug encontrado y corregido durante la verificación de esta misma
+  release**: el botón "Save" de Settings fallaba silenciosamente (422) --
+  `api-client.js` nunca mandaba `Content-Type: application/json` en los
+  PUT. Nunca se había probado el flujo completo por UI en 6.1.0, solo por
+  API directa.
+
+**Pendiente real de 6.2.0**: screenshots del README (bloqueado desde
+6.1.0, sigue igual). Generación PCIe/chipset quedan fuera por decisión
+informada, no por falta de tiempo -- ver arriba.
+
+---
+
 ## 1. Identificación y clasificación de discos (P0 -- núcleo)
 
 - [x] ✅ Shipped en 6.1.0: reemplazada la detección por string del nombre
   del modelo por `MSFT_PhysicalDisk` (WMI `root\Microsoft\Windows\Storage`),
   que expone `MediaType`, `SpindleSpeed` y `BusType` reales -- misma fuente
   que usa Windows Settings y `Get-PhysicalDisk`.
-- [ ] Detectar bus real: SATA vs NVMe vs PCIe, y generación (Gen3/Gen4/Gen5)
-  -- `BusType` de `MSFT_PhysicalDisk` es el punto de partida, ver ítem de
-  arriba (se obtiene como side-effect del ítem confirmado, pero la
-  generación específica queda para más adelante)
-- [ ] Mostrar controlador/chipset al que está conectado cada disco (detecta
-  lanes compartidos)
-- [ ] Marcar claramente cuál es el disco de arranque (boot)
-- [ ] Mapear disco físico → letras de unidad/particiones que contiene
+- [x] ✅ Shipped en 6.1.0 (parte) / investigado en 6.2.0: SATA vs NVMe ya
+  se detecta via `BusType`. Generación PCIe (Gen3/4/5) investigada en
+  6.2.0 y **no implementada** -- no hay fuente WMI confiable, requeriría
+  `DeviceIoControl` de bajo nivel sin hardware multi-vendor para validar.
+- [ ] Mostrar controlador/chipset al que está conectado cada disco --
+  investigado en 6.2.0 y **no implementado**: `Win32_SCSIControllerDevice`
+  no resuelve de forma confiable en el hardware de prueba, y los nombres
+  que da Windows son genéricos, no el chipset real.
+- [x] ✅ Shipped en 6.2.0: disco de arranque marcado (`is_boot`, comparado
+  contra `os.environ["SystemDrive"]`), badge en Drive Info y Dashboard.
+- [x] ✅ Shipped en 6.2.0: columna "Physical Disk" agregada a la tabla de
+  Partitions -- el dato ya existía en la estructura, era un gap de UI.
 
 ## 2. Rendimiento y velocidad (P0 -- núcleo)
 
@@ -75,24 +123,33 @@ queda para la siguiente release.
   `win32file`/`mmap` para bypassear el cache y medir el disco de verdad.
 - [x] ✅ Shipped en 6.1.0: parámetros `total_mb` expuestos en la UI como
   presets (Quick/Standard/Thorough).
-- [ ] Benchmark de lectura/escritura ya existe -- agregar test de latencia /
-  IOPS (no solo throughput secuencial)
+- [x] ✅ Shipped en 6.2.0: test de IOPS/latencia (4K random write+read)
+  sumado al throughput secuencial -- verificado contra hardware real
+  (HDD): 622 write IOPS/1.6ms, 76 read IOPS/13ms, ambos plausibles para
+  un 7200RPM.
 - [x] ✅ Shipped en 6.1.0: historial de benchmarks (disco, fecha, promedio
   lectura/escritura) guardado local (SQLite), con tabla de tendencia bajo
   el gráfico.
 - [ ] Benchmark programado (ej. semanal, opcional)
-- [ ] Detección de discos "lentos" vs su categoría esperada (ej. NVMe
-  rindiendo como SATA → alerta de mal montaje/modo AHCI)
+- [x] ✅ Shipped en 6.2.0: detección de discos "underperforming" vs su
+  categoría esperada (`expectations.py`, umbrales por media_type/bus_type),
+  con badge de advertencia y guardado en el historial.
 - [x] ✅ Shipped en 6.1.0: actividad de I/O real en vivo por disco vía
   `psutil.disk_io_counters(perdisk=True)`, transmitida por el WebSocket
   existente, mostrada como sparkline en la card de cada disco.
 
 ## 3. Salud y estado (P0/P1)
 
-- [ ] Historial de temperatura/salud en el tiempo (gráfico, ya se usa Chart.js)
-- [ ] Umbrales configurables de alerta (temp, % vida restante)
-- [ ] Lectura de atributos SMART crudos (raw values) para usuarios avanzados
-- [ ] TBW (Total Bytes Written) / ciclos de escritura estimados cuando SMART lo exponga (P1)
+- [x] ✅ Shipped en 6.2.0: historial de temperatura/salud en el tiempo,
+  gráfico Chart.js on-demand por disco (botón "History"), snapshots
+  guardados cada 60s en `health_snapshots`.
+- [x] ✅ Shipped en 6.2.0 (parte): umbral de alerta de temperatura
+  configurable en Settings. % de vida restante queda para más adelante
+  (ningún disco de prueba expone un atributo SMART equivalente).
+- [x] ✅ Shipped en 6.2.0: tabla de atributos SMART crudos (id/current/
+  worst/raw) en un `<details>` colapsable por disco, para usuarios avanzados.
+- [x] ✅ Shipped en 6.2.0: estimado de TBW (atributo SMART 241 x 512 bytes),
+  mismo fallback honesto a "no disponible" que temperatura.
 - [ ] Detección de discos recién conectados (USB) en vivo sin refrescar manualmente
 - [~] ✅ Shipped en 6.1.0 (experimental): temperatura de disco donde esté
   disponible, parseando los atributos SMART crudos 194/190 de
@@ -131,9 +188,11 @@ queda para la siguiente release.
 - [x] ✅ Shipped en 6.1.0: página de Settings en la UI, editando el mismo
   `settings.py` centralizado (poll interval, % de espacio bajo,
   notificaciones, autostart, puerto).
-- [x] ✅ Shipped en 6.1.0: toggle de autostart editable desde la app --
-  verificado escribiendo y leyendo la clave de registro directamente
-  (`HKCU\...\Run`), la misma que usa el instalador.
+- [x] ✅ Shipped en 6.1.0, mecanismo reemplazado en 6.2.0: toggle de
+  autostart editable desde la app. Migrado de la registry Run key a un
+  Scheduled Task (`/rl highest`) en 6.2.0, como consecuencia de la
+  decisión de correr siempre elevado -- ver sección 8 y
+  `DiskInfo-project-plan.md`.
 - [ ] Atajo de teclado global para abrir/mostrar la ventana
 - [ ] Resumen compacto al hacer hover sobre el ícono de bandeja
 - [ ] Auto-actualización de la app (check for updates, dado que el
@@ -150,24 +209,26 @@ queda para la siguiente release.
   incorrecto del buffer entre llamadas a `ReadFile`) antes de que llegara
   a ejecutarse contra un disco real. Cobertura retroactiva del resto de
   módulos queda para ir sumando con el tiempo.
-- [ ] Tests de integración para los endpoints WebSocket (simular
-  reconexión, mensajes fuera de orden)
+- [x] ✅ Shipped en 6.2.0: tests de integración de WebSocket (FastAPI
+  `TestClient`: tick recibido, reconexión, conexiones concurrentes).
 - [ ] Manejo consistente de errores: WMI no disponible, disco desconectado
   a mitad de operación, permisos insuficientes -- definir un formato de
   error uniforme entre todos los módulos, no ad-hoc por feature
-- [ ] Logging a archivo (rotación básica) para debugging cuando alguien
-  reporta un issue -- hoy el Troubleshooting del README pide "abrir un
-  issue" sin mencionar logs adjuntos
+- [x] ✅ Shipped en 6.2.0: logging a archivo rotativo
+  (`%LOCALAPPDATA%\DiskInfo\diskinfo.log`), reemplaza los `print()` que no
+  iban a ningún lado en la app empaquetada. README actualizado para pedirlo
+  en issues.
 - [ ] Manejo de reconexión de WebSocket en el frontend si el backend se
   reinicia o hay hiccup (parcialmente cubierto: `ws-client.js` ya
   reconecta con backoff, falta UX explícita en cada vista)
-- [ ] Linting/formatting configurado (black/ruff para Python, eslint si
-  corresponde) y agregado al workflow de CI existente
-  (`.github/workflows/`)
-- [ ] Revisar necesidad real de "ejecutar como administrador" por feature
-  -- hoy es un caso documentado en Troubleshooting, pero sería mejor
-  detectar en runtime qué falló por permisos y pedir elevación solo cuando
-  haga falta, en vez de requerir admin siempre
+- [x] ✅ Shipped en 6.2.0: `ruff` configurado (`backend/ruff.toml`) y
+  agregado a un nuevo workflow de CI (`.github/workflows/ci.yml`, separado
+  del `release.yml` existente) que corre lint + pytest en cada push/PR.
+- [x] ✅ Shipped en 6.2.0 (resuelto distinto a como estaba planteado): en
+  vez de "elevar solo cuando haga falta", la decisión final -- pedida
+  explícitamente por el usuario tras un bug report real -- fue elevar
+  siempre, una sola vez, de forma predecible. Ver "Why DiskInfo runs
+  elevated" en `DiskInfo-project-plan.md`.
 
 ## 9. Empaquetado y distribución (P2)
 
@@ -196,9 +257,10 @@ Estas no son features aisladas: son puntos donde dos o más ítems de arriba
 deberían compartir lógica o UI en vez de construirse por separado. Vale la
 pena resolverlas mientras se planea cada feature individual, no después.
 
-- [ ] Dashboard/Overview unificado: vista inicial con resumen de todos los
-  discos (score simple: salud + espacio libre + rendimiento vs. categoría
-  esperada), en vez de que el usuario tenga que entrar pestaña por pestaña
+- [x] ✅ Shipped en 6.2.0: Dashboard/Overview unificado como vista de
+  entrada por defecto -- una card por disco con badge de boot, salud,
+  barra de espacio, y badge de rendimiento vs. categoría esperada
+  (reutilizando el historial de benchmark, sin endpoint nuevo).
 - [ ] Correlación Health + Benchmark: cruzar historial de
   temperatura/salud (sección 3) con historial de benchmark (sección 2)
   para detectar degradación de rendimiento asociada a salud/temperatura,
@@ -249,28 +311,30 @@ encriptación, localización, soporte cross-platform.
 
 ## Próximos pasos
 
-1. ~~Resolver el conflicto de scope de export/reporting~~ -- hecho.
+1. ~~Resolver el conflicto de scope de export/reporting~~ -- hecho (6.1.0).
 2. ~~Implementar los 10 ítems + testing infra + config centralizada~~ --
    hecho, shipped en 6.1.0 (2026-08-14). Ver `CHANGELOG.md`.
-3. ~~De la sección 1 y 2, lo que quede fuera de esta release, queda para la
-   siguiente~~ -- aplicado: bus/generación PCIe detallada, controlador/
-   chipset, disco de boot, mapeo físico→letras, IOPS/latencia, benchmark
-   programado, y detección de discos "lentos vs. categoría esperada" siguen
-   sin marcar, quedan abiertos en las secciones 1 y 2.
-4. La sección 8 (robustez) se sigue resolviendo en paralelo con cada
-   feature nueva -- esta release sumó pytest; falta logging a archivo,
-   manejo de errores uniforme, tests de integración WS, y linting/CI.
-5. ~~Config centralizada (sección 11) junto con Settings UI~~ -- hecho.
-6. Mantener este archivo actualizado -- hecho para esta release; sigue
-   aplicando hacia adelante.
+3. ~~Continuar secciones 1/2 + salud + Dashboard + robustez~~ -- hecho,
+   shipped en 6.2.0 (2026-08-14). Ver `CHANGELOG.md`.
+4. ~~La sección 8 (robustez) se sigue resolviendo en paralelo~~ -- 6.2.0
+   sumó logging, tests de integración WS, y linting/CI. Quedan: manejo de
+   errores uniforme entre módulos, y UX explícita de reconexión WS por vista.
+5. ~~Config centralizada (sección 11) junto con Settings UI~~ -- hecho (6.1.0).
+6. Mantener este archivo actualizado -- hecho para 6.2.0; sigue aplicando
+   hacia adelante.
 
-**Pendiente real de 6.1.0**: el ítem #11 (screenshots del README) no se
-pudo completar por limitación de herramientas, no por decisión de alcance
--- sigue en el backlog tal cual.
+**Pendiente real, arrastrado de 6.1.0 y 6.2.0**: screenshots del README --
+sigue bloqueado por limitación de herramientas, no por decisión de alcance.
 
-**Próximo paso sugerido**: de las secciones P0 (1 y 2) que quedaron sin
-marcar, `IOPS/latencia además de throughput secuencial` y `detección de
-discos lentos vs. categoría esperada` son las que más se acercan al
-propósito original del proyecto y a lo que ya se construyó en 6.1.0 (el
-benchmark y la detección de tipo de disco). Buenos candidatos para la
-próxima ronda de planificación.
+**Decisiones informadas, no pendientes**: generación PCIe y
+controlador/chipset (sección 1) fueron investigadas en 6.2.0 contra
+hardware real y descartadas por falta de una fuente de datos confiable --
+no son "trabajo por hacer", son ítems cerrados con una razón documentada.
+
+**Próximo paso sugerido**: el treemap de uso de disco (sección 5) sigue
+siendo la pieza grande sin tocar del propósito original -- retomar en
+cuanto se comparta `diskinfo-space-viz-plan.md`. Mientras tanto, de lo que
+queda sin marcar en las secciones P0/P1, "detección de discos USB recién
+conectados en vivo" (sección 3) y "atajo de teclado global" (sección 7)
+son mejoras chicas y aisladas si se quiere una release más corta antes del
+treemap.

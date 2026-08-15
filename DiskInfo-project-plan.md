@@ -59,6 +59,30 @@ Falls back to the old buffered path (with `cache_bypassed: false` on the
 by an unusual filesystem or virtual disk -- an honest caveat instead of a
 hard failure.
 
+## Why DiskInfo runs elevated (as of 6.2.0)
+
+A real bug forced this decision: running the benchmark against `C:` failed
+with `Permission denied` writing `diskinfo_benchmark.tmp` to the drive
+root, because that specific Windows configuration doesn't allow standard
+users to write there. Rather than patch around that one case, the app now
+always requests admin elevation at launch (`uac_admin=True` in
+`backend/diskinfo.spec`, which embeds a `requireAdministrator` manifest) --
+a UAC prompt on every start, traded for never hitting a silent permission
+failure on any drive root, and because section 4 of the roadmap (TRIM,
+power modes) will need admin too. This was an explicit user decision,
+overriding the roadmap's earlier "detect and elevate only when needed"
+idea in section 8 in favor of one predictable model decided once.
+
+**Consequence for autostart**: Windows does not reliably start an
+elevation-manifested exe from the `HKCU\...\Run` registry key at logon --
+it either silently fails or never prompts. `backend/app/autostart.py`
+was rewritten to use a Scheduled Task (`schtasks /sc onlogon /rl highest`)
+instead, which Windows does start elevated without a prompt. The
+installer's old autostart checkbox (which wrote to the Run key) was
+removed for the same reason -- autostart is managed solely from the
+in-app Settings page now, since it has to run *after* the app is already
+elevated to create the scheduled task.
+
 ## Explicitly out of scope for this rewrite
 
 Carried over from the old `potential_future_features.txt` roadmap, still

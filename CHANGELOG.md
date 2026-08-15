@@ -3,6 +3,59 @@
 All notable changes to this project are documented here.
 Format based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [6.2.0] - 2026-08-14
+
+### Fixed
+
+- **Benchmark failed with `Permission denied` writing to a drive root**
+  (e.g. `C:\diskinfo_benchmark.tmp`) on Windows configurations that
+  restrict standard-user writes there. Fixed at the root: DiskInfo now
+  always requests admin elevation at launch (`uac_admin=True`, a UAC
+  prompt every start) instead of failing on specific drives -- a
+  deliberate, user-directed tradeoff. See "Why DiskInfo runs elevated" in
+  `DiskInfo-project-plan.md`.
+  - Autostart moved from the registry Run key to a Scheduled Task
+    (`/rl highest`), since Windows doesn't reliably start an
+    elevation-manifested exe from the Run key at logon. The installer's
+    old autostart checkbox was removed; autostart is managed from Settings.
+- **Settings "Save" silently failed** (`422` from the API, never
+  surfaced clearly in the UI): `api-client.js` never set
+  `Content-Type: application/json` on PUT requests, so FastAPI parsed the
+  body as a raw string instead of an object. Found and fixed during this
+  release's own verification pass.
+
+### Added
+
+Continuing `DiskInfo-roadmap.md`'s P0 core, health depth, and a new
+Dashboard tying it together:
+
+- Boot disk marking (Drive Info, Dashboard).
+- Random 4K IOPS/latency benchmark phase alongside the existing
+  sequential throughput test, stored in history alongside it.
+- Underperforming-drive detection: flags a benchmark result well below
+  what its detected media/bus type should sustain (e.g. an NVMe drive
+  benchmarking like SATA), surfaced in the UI and in history.
+- Health/temperature history charted over time, with a full raw SMART
+  attribute table and a TBW estimate for advanced users (both honestly
+  `null`/"--" where the driver doesn't expose them, same as temperature).
+- Configurable temperature alert threshold in Settings.
+- A new Dashboard landing view: one row per drive with health, free
+  space, and performance-vs-expected at a glance, instead of tab-hopping.
+- File logging to `%LOCALAPPDATA%\DiskInfo\diskinfo.log` (rotating),
+  replacing prints that went nowhere once the app is packaged.
+- `ruff` linting and a new CI workflow (`.github/workflows/ci.yml`)
+  running lint + the full pytest suite on every push/PR.
+- WebSocket integration tests using FastAPI's `TestClient`.
+
+### Investigated, not shipped
+
+- PCIe generation/lane detection and per-disk controller/chipset name:
+  tested against this project's own mixed HDD/NVMe hardware --
+  `Win32_SCSIControllerDevice` doesn't reliably resolve disk-to-controller
+  on this system, and even Windows' inbox controllers report only generic
+  names ("Standard NVM Express Controller"), not real chipset info. Not
+  worth shipping something that would show "Unknown" for most users.
+
 ## [6.1.0] - 2026-08-14
 
 Robustness pass: fixes the two known-wrong things from 6.0.0, plus 9 more

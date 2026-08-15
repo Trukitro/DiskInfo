@@ -11,6 +11,10 @@ import win32com.client
 # ATA SMART attribute IDs conventionally used for temperature -- checked in
 # this order since 194 is by far the more common/reliable of the two.
 _TEMPERATURE_ATTR_IDS = (194, 190)
+# Total_LBAs_Written -- not universal, but common enough across SSD vendors
+# to be worth a best-effort estimate.
+_TBW_ATTR_ID = 241
+_LBA_SIZE_BYTES = 512
 
 
 def get_health() -> list[dict]:
@@ -54,35 +58,45 @@ def _get_health() -> list[dict]:
             # disk.Status above already covers the fallback case.
             pass
 
-        entry["temperature_c"] = _get_smart_temperature(locator, disk.DeviceID)
+        temperature_c, smart_attributes, tbw_estimate_gb = _get_smart_data(locator, disk.DeviceID)
+        entry["temperature_c"] = temperature_c
+        entry["smart_attributes"] = smart_attributes
+        entry["tbw_estimate_gb"] = tbw_estimate_gb
         results.append(entry)
 
     return results
 
 
-def _get_smart_temperature(locator, device_id: str) -> int | None:
-    """Best-effort SMART temperature (attribute 194, falling back to 190),
-    parsed from the raw ATA SMART attribute table exposed via
-    MSStorageDriver_ATAPISmartData.VendorSpecific. This format is not
-    standardized across vendors -- returns None on any unexpected shape
-    rather than guessing, since a wrong temperature reading is worse than
-    an honest "not available."""
+def _get_smart_data(locator, device_id: str) -> tuple[int | None, list[dict], float | None]:
+    """Fetches and parses the raw ATA SMART attribute table once per disk,
+    deriving temperature, the full attribute list (for advanced users),
+    and a rough TBW estimate from it -- one WMI query instead of three.
+    Returns (None, [], None) on any failure; not every storage driver
+    exposes MSStorageDriver_ATAPISmartData at all."""
     try:
         wmi_ns = locator.ConnectServer(".", "root\\wmi")
         for smart in wmi_ns.ExecQuery("SELECT * FROM MSStorageDriver_ATAPISmartData"):
             if device_id not in smart.InstanceName:
                 continue
-            return _parse_smart_temperature(bytes(smart.VendorSpecific))
+            attrs = _parse_smart_attributes(bytes(smart.VendorSpecific))
+            return (
+                _temperature_from_attrs(attrs),
+                [{"id": attr_id, **values} for attr_id, values in sorted(attrs.items())],
+                _tbw_from_attrs(attrs),
+            )
     except Exception:
         pass
-    return None
+    return None, [], None
 
 
-def _parse_smart_temperature(raw: bytes) -> int | None:
+def _parse_smart_attributes(raw: bytes) -> dict[int, dict[str, int]]:
     """raw is the 512-byte VendorSpecific SMART data blob: a 2-byte
     structure revision followed by up to 30 fixed-size 12-byte attribute
-    records (id, flags[2], current, worst, raw_value[6], reserved)."""
-    attrs: dict[int, int] = {}
+    records (id, flags[2], current, worst, raw_value[6], reserved). The
+    6-byte raw value is read as a little-endian integer -- big enough for
+    fields like TBW's LBA count, not just a single byte like temperature
+    needs."""
+    attrs: dict[int, dict[str, int]] = {}
     for i in range(30):
         offset = 2 + i * 12
         if offset + 12 > len(raw):
@@ -90,12 +104,38 @@ def _parse_smart_temperature(raw: bytes) -> int | None:
         attr_id = raw[offset]
         if attr_id == 0:
             continue
-        attrs[attr_id] = raw[offset + 5]  # first byte of the 6-byte raw value
+        attrs[attr_id] = {
+            "current": raw[offset + 3],
+            "worst": raw[offset + 4],
+            "raw": int.from_bytes(raw[offset + 5 : offset + 11], "little"),
+        }
+    return attrs
 
+
+def _temperature_from_attrs(attrs: dict[int, dict[str, int]]) -> int | None:
     for attr_id in _TEMPERATURE_ATTR_IDS:
-        value = attrs.get(attr_id)
+        entry = attrs.get(attr_id)
+        if entry is None:
+            continue
+        low_byte = entry["raw"] & 0xFF
         # Sanity bound: 0 or an absurdly high byte value is more likely a
         # parsing artifact on this vendor's layout than a real reading.
-        if value is not None and 0 < value < 128:
-            return value
+        if 0 < low_byte < 128:
+            return low_byte
     return None
+
+
+def _tbw_from_attrs(attrs: dict[int, dict[str, int]]) -> float | None:
+    """Rough estimate, not a spec-guaranteed value -- attribute 241's raw
+    value is conventionally a count of 512-byte LBAs written, but the unit
+    isn't standardized across vendors the same way temperature's isn't."""
+    entry = attrs.get(_TBW_ATTR_ID)
+    if entry is None or entry["raw"] <= 0:
+        return None
+    return round(entry["raw"] * _LBA_SIZE_BYTES / (1024**3), 1)
+
+
+def _parse_smart_temperature(raw: bytes) -> int | None:
+    """Kept as a small direct entry point (used by tests and previously by
+    callers) on top of the shared attribute parser."""
+    return _temperature_from_attrs(_parse_smart_attributes(raw))

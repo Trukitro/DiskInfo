@@ -1,12 +1,18 @@
 ; DiskInfo installer.
 ;
-; Admin rights: installs per-user, no UAC elevation -- matches the app's own
-; unprivileged default (WMI drive/SMART queries and the benchmark's temp
-; file both work fine without admin).
+; Admin rights: the installer itself runs unprivileged (installs per-user,
+; no UAC elevation to install) -- but the app *itself* always requests
+; elevation on launch (diskinfo.spec's uac_admin=True), since some drive
+; roots need admin to write the benchmark temp file to. See
+; DiskInfo-project-plan.md's "Why DiskInfo runs elevated".
 ;
-; Autostart: opt-in via an unchecked installer checkbox, not on by default --
-; a disk monitoring tool auto-launching at boot is the kind of thing that
-; should be an explicit choice.
+; Autostart: not offered here anymore -- an elevation-manifested exe
+; launched from the registry Run key (which an installer-time checkbox
+; would normally write to) doesn't reliably start at logon. Autostart is
+; a Scheduled Task instead, created/removed from the in-app Settings page
+; (see backend/app/autostart.py), which the installer can't do at install
+; time anyway since scheduled-task creation needs the *app* to already be
+; elevated when it's toggled, not the installer.
 
 #define MyAppName "DiskInfo"
 #ifndef MyAppVersion
@@ -40,7 +46,6 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [Tasks]
 Name: "desktopicon"; Description: "Create a &desktop icon"; GroupDescription: "Additional icons:"
-Name: "autostart"; Description: "Start DiskInfo automatically when Windows starts"; GroupDescription: "Startup:"; Flags: unchecked
 
 [Files]
 Source: "..\backend\dist\DiskInfo\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
@@ -56,9 +61,6 @@ Source: "redist\MicrosoftEdgeWebView2Setup.exe"; DestDir: "{tmp}"; Flags: delete
 ; internal path is one PyInstaller version bump away from silently breaking again.
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; IconFilename: "{app}\{#MyAppExeName}"
 Name: "{autodesktop}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"; Tasks: desktopicon; IconFilename: "{app}\{#MyAppExeName}"
-
-[Registry]
-Root: HKCU; Subkey: "Software\Microsoft\Windows\CurrentVersion\Run"; ValueType: string; ValueName: "DiskInfo"; ValueData: """{app}\{#MyAppExeName}"""; Tasks: autostart; Flags: uninsdeletevalue
 
 [Run]
 Filename: "{tmp}\MicrosoftEdgeWebView2Setup.exe"; Parameters: "/silent /install"; StatusMsg: "Installing Microsoft WebView2 Runtime..."; Check: WebView2RuntimeMissing and FileExists(ExpandConstant('{tmp}\MicrosoftEdgeWebView2Setup.exe'))

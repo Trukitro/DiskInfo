@@ -14,8 +14,12 @@ import webbrowser
 
 import webview
 
+from .logging_setup import configure_logging, get_logger
 from .settings import load_settings
 from .tray import TrayIcon
+
+configure_logging()
+logger = get_logger("shell")
 
 APP_TITLE = "DiskInfo"
 _MUTEX_NAME = "Local\\DiskInfoSingleInstance"
@@ -99,7 +103,7 @@ def main() -> None:
     port = _find_available_port(settings.port)
     _start_server(port)
     if not _wait_until_serving(port):
-        print("DiskInfo backend failed to start", file=sys.stderr)
+        logger.error("DiskInfo backend failed to start on port %d", port)
         sys.exit(1)
 
     window = webview.create_window(

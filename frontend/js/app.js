@@ -17,6 +17,7 @@ import { applyTheme, getTheme, isEffectivelyDark } from "./theme.js";
 import { api } from "./api-client.js";
 import "./ws.js";
 
+import "./components/dashboard-view.js";
 import "./components/drive-view.js";
 import "./components/health-view.js";
 import "./components/partitions-view.js";
@@ -53,6 +54,7 @@ document.getElementById("theme-toggle").addEventListener("click", (event) => {
 });
 
 const NAV_ITEMS = [
+  { id: "dashboard", label: "Dashboard", icon: "icon-dashboard", tag: "dashboard-view" },
   { id: "drives", label: "Drive Info", icon: "icon-drive", tag: "drive-view" },
   { id: "health", label: "Health Status", icon: "icon-health", tag: "health-view" },
   { id: "partitions", label: "Partitions", icon: "icon-partitions", tag: "partitions-view" },
@@ -100,7 +102,7 @@ window.addEventListener("hashchange", () => {
   if (id) renderView(id);
 });
 
-renderView(window.location.hash.replace("#/", "") || "drives");
+renderView(window.location.hash.replace("#/", "") || "dashboard");
 
 const versionEl = document.getElementById("app-version");
 api

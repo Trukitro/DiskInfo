@@ -27,14 +27,16 @@ A FastAPI backend running inside a native (chromeless) desktop window, with a we
 
 ## Features
 
+- **Dashboard**: One card per physical disk -- boot marker, health, free space, and performance-vs-expected-for-its-category at a glance, instead of tab-hopping.
 - **Drive Info**: Real HDD/SSD/NVMe classification and bus type (via the same Storage Management API Windows Settings uses, not a guess from the model name), capacity/usage, and a live per-drive read/write activity sparkline.
-- **Health Status**: SMART predictive-failure data where the driver exposes it, plus experimental SMART temperature.
+- **Health Status**: SMART predictive-failure data where the driver exposes it, temperature history over time, a raw SMART attribute table, and a TBW estimate for advanced users.
 - **Partitions**: Detailed partition information in a Windows Disk Management-style interface.
-- **Benchmark**: Read/write speed test that bypasses the Windows page cache (`FILE_FLAG_NO_BUFFERING`) so results reflect the physical drive, not RAM -- configurable size (Quick/Standard/Thorough), a live chart, and local run history.
-- **Settings**: Poll interval, low-space threshold, notifications, and autostart, all editable in-app.
+- **Benchmark**: Sequential read/write and random 4K IOPS/latency, bypassing the Windows page cache (`FILE_FLAG_NO_BUFFERING`) so results reflect the physical drive, not RAM -- configurable size, a live chart, local run history, and a warning when a result is well below what the drive's category should sustain.
+- **Settings**: Poll interval, low-space/temperature thresholds, notifications, and autostart, all editable in-app.
 - **Export**: CSV/JSON export of Drive Info, Health Status, and Partitions data.
 - **Light / Dark / System theme**: Switch appearance, or follow the OS.
-- **Tray icon + notifications**: Minimizes to the tray instead of quitting; native Windows toasts for low disk space or a predicted drive failure.
+- **Tray icon + notifications**: Minimizes to the tray instead of quitting; native Windows toasts for low disk space, temperature, or a predicted drive failure.
+- **Always elevated**: requests admin on launch (see [Installation](#installation)) so drive-root writes and future disk-management features never hit a silent permission error.
 
 ---
 
@@ -44,6 +46,7 @@ A FastAPI backend running inside a native (chromeless) desktop window, with a we
 1. Go to the [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
 2. Download and run the latest `DiskInfoSetup.exe`.
 3. If Windows SmartScreen warns you (the installer isn't code-signed), click **More info** → **Run anyway**.
+4. DiskInfo always requests administrator elevation on launch (a UAC prompt every start) -- some drives require admin to write the benchmark's temp file to their root, so this is requested once and predictably instead of failing partway through a feature. See [DiskInfo-project-plan.md](DiskInfo-project-plan.md) for why.
 
 ### Option B -- run from source
 
@@ -121,11 +124,12 @@ Created by EtchTechnologies ([Rikion](https://github.com/Trukitro)).
 
 1. **Missing dependencies when running from source**: `pip install -r backend/requirements.txt`.
 2. **Windows SmartScreen warning**: click **More info** → **Run anyway**. The installer isn't code-signed but is safe if downloaded from the official [Releases](https://github.com/Trukitro/DiskInfo/releases) page.
-3. **Permission errors accessing a drive**: some drives (e.g. system-protected volumes) may need the app run as administrator.
+3. **UAC prompt on every launch**: expected -- DiskInfo always runs elevated (see [Installation](#installation)), not just for certain drives.
 4. **No SMART data for a drive**: not every drive/driver exposes `MSStorageDriver_FailurePredictStatus`; DiskInfo falls back to the drive's basic WMI status in that case.
 5. **Benchmark fails**: make sure the selected drive is writable and has at least 200MB free.
+6. **Autostart toggle fails in Settings**: it creates a Scheduled Task, which needs DiskInfo to already be running elevated -- if you declined the UAC prompt at launch, autostart can't be changed until you relaunch and accept it.
 
-If you hit something else, open an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues).
+If you hit something else, open an issue on the [GitHub repository](https://github.com/Trukitro/DiskInfo/issues) and attach `%LOCALAPPDATA%\DiskInfo\diskinfo.log` -- it's a rotating log of what the app actually did, more useful than a description of what you saw on screen.
 
 ---
 

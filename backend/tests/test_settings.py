@@ -19,3 +19,10 @@ def test_load_settings_ignores_unknown_keys(settings_path):
 def test_load_settings_falls_back_to_defaults_on_corrupt_json(settings_path):
     settings_path.write_text("not json", encoding="utf-8")
     assert load_settings(settings_path) == Settings()
+
+
+def test_temperature_alert_c_defaults_to_none_and_roundtrips(settings_path):
+    assert Settings().temperature_alert_c is None
+    original = Settings(temperature_alert_c=55)
+    save_settings(original, settings_path)
+    assert load_settings(settings_path).temperature_alert_c == 55

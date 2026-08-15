@@ -5,6 +5,7 @@ app's get_drive_mappings()."""
 
 from __future__ import annotations
 
+import os
 import re
 
 import psutil
@@ -108,6 +109,10 @@ def get_drives() -> list[dict]:
 def _get_drives() -> list[dict]:
     service = _wmi_service()
     physical_disk_info = _get_physical_disk_info()
+    # os.environ["SystemDrive"] is always set by Windows (e.g. "C:") and is
+    # the cheapest reliable way to identify the boot volume -- no extra WMI
+    # query needed.
+    system_drive = (os.environ.get("SystemDrive") or "C:").rstrip("\\").upper() + "\\"
     drives = []
 
     for disk in service.ExecQuery("SELECT * FROM Win32_DiskDrive"):
@@ -143,6 +148,8 @@ def _get_drives() -> list[dict]:
             media_type = _infer_media_type(disk.Model, getattr(disk, "MediaType", None))
             bus_type = disk.InterfaceType or "Unknown"
 
+        is_boot = any(p["mountpoint"].upper() == system_drive for p in partitions)
+
         drives.append(
             {
                 "device_id": disk.DeviceID,
@@ -151,6 +158,7 @@ def _get_drives() -> list[dict]:
                 "media_type": media_type,
                 "bus_type": bus_type,
                 "size": int(disk.Size) if disk.Size else 0,
+                "is_boot": is_boot,
                 "partitions": partitions,
             }
         )

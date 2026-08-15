@@ -4,7 +4,12 @@
 const API_BASE = "/api";
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API_BASE}${path}`, options);
+  // fetch() defaults an unset Content-Type to text/plain for a string
+  // body, which makes FastAPI treat the whole body as a raw string
+  // instead of parsing it as JSON -- explicit here rather than relying on
+  // the browser's default, for every request that actually has a body.
+  const headers = options.body ? { "Content-Type": "application/json", ...options.headers } : options.headers;
+  const res = await fetch(`${API_BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     let detail = res.statusText;
     try {
@@ -25,6 +30,7 @@ export const api = {
   partitions: () => request("/partitions"),
   startBenchmark: (letter, totalMb) => request(`/benchmark/${letter}?total_mb=${totalMb}`, { method: "POST" }),
   benchmarkHistory: (letter) => request(`/benchmark/history?drive=${letter}`),
+  healthHistory: (deviceId) => request(`/health/history?device_id=${encodeURIComponent(deviceId)}`),
   settings: () => request("/settings"),
   updateSettings: (patch) => request("/settings", { method: "PUT", body: JSON.stringify(patch) }),
 };

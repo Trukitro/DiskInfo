@@ -1,0 +1,11 @@
+target-version = "py310"
+line-length = 120
+
+[lint]
+select = ["E", "F", "W", "I"]
+ignore = [
+  "E501",  # line-length is a soft guideline here, not a hard failure
+]
+
+[lint.isort]
+known-first-party = ["app"]

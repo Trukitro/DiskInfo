@@ -1,39 +1,60 @@
-"""Windows autostart via the current user's Run registry key -- the same
-key the installer's optional autostart checkbox writes to (see
-installer/diskinfo.iss's [Registry] section), so toggling it here from the
-Settings UI and toggling it at install time stay consistent with each
-other rather than fighting over two different mechanisms."""
+"""Windows autostart via Task Scheduler, not the registry Run key.
+
+DiskInfo's exe carries a requireAdministrator manifest (see diskinfo.spec's
+uac_admin=True), and Windows does not reliably UAC-prompt -- or simply
+fails silently -- for an elevation-manifested exe launched from
+HKCU\\...\\Run at logon. A scheduled task with "run with highest
+privileges" is the correct, Microsoft-documented way to auto-start
+something that needs admin, so that's what this uses instead."""
 
 from __future__ import annotations
 
+import subprocess
 import sys
-import winreg
 
-_RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
-_VALUE_NAME = "DiskInfo"
+_TASK_NAME = "DiskInfoAutostart"
+
+# CREATE_NO_WINDOW: schtasks is a console tool; without this a console
+# window would flash briefly every time Settings reads/writes autostart,
+# since DiskInfo itself runs windowed (console=False in diskinfo.spec).
+_NO_WINDOW = 0x08000000
+
+
+def _run(args: list[str]) -> subprocess.CompletedProcess:
+    return subprocess.run(args, capture_output=True, text=True, creationflags=_NO_WINDOW)
 
 
 def is_enabled() -> bool:
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_READ) as key:
-            winreg.QueryValueEx(key, _VALUE_NAME)
-            return True
-    except FileNotFoundError:
-        return False
+    result = _run(["schtasks", "/query", "/tn", _TASK_NAME])
+    return result.returncode == 0
 
 
 def enable() -> None:
     # Only meaningful for the packaged .exe -- in dev mode (`python
     # backend/run.py`) sys.executable is the Python interpreter itself,
     # which wouldn't relaunch DiskInfo. The Settings UI is expected to be
-    # used against the installed app, same as the installer's own checkbox.
-    with winreg.CreateKeyEx(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_WRITE) as key:
-        winreg.SetValueEx(key, _VALUE_NAME, 0, winreg.REG_SZ, f'"{sys.executable}"')
+    # used against the installed app.
+    result = _run(
+        [
+            "schtasks",
+            "/create",
+            "/tn",
+            _TASK_NAME,
+            "/tr",
+            f'"{sys.executable}"',
+            "/sc",
+            "onlogon",
+            "/rl",
+            "highest",
+            "/f",
+        ]
+    )
+    if result.returncode != 0:
+        raise OSError(f"schtasks /create failed: {result.stderr.strip() or result.stdout.strip()}")
 
 
 def disable() -> None:
-    try:
-        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, _RUN_KEY, 0, winreg.KEY_WRITE) as key:
-            winreg.DeleteValue(key, _VALUE_NAME)
-    except FileNotFoundError:
-        pass
+    result = _run(["schtasks", "/delete", "/tn", _TASK_NAME, "/f"])
+    # Exit code 1 with "cannot find" is schtasks' way of saying "already gone" -- fine.
+    if result.returncode != 0 and "cannot find" not in result.stderr.lower():
+        raise OSError(f"schtasks /delete failed: {result.stderr.strip() or result.stdout.strip()}")

@@ -41,6 +41,13 @@ exe = EXE(
     upx=True,
     console=False,
     icon=str(PROJECT_ROOT / "assets" / "icon.ico"),
+    # Embeds a requireAdministrator manifest -- Windows UAC-prompts on every
+    # launch regardless of how it's started. Deliberate: several features
+    # (writing the benchmark temp file to a protected drive root, later
+    # TRIM/power-mode actions) need admin, and the decision is to elevate
+    # once and predictably rather than per-feature. See
+    # DiskInfo-project-plan.md's "Why DiskInfo runs elevated".
+    uac_admin=True,
 )
 
 coll = COLLECT(

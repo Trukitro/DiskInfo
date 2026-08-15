@@ -2,9 +2,9 @@ import sys
 
 import pytest
 
-pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="drives.py imports win32com/pythoncom at module level")
-
 from app.drives import _BUS_TYPES, _MEDIA_TYPES, _infer_media_type, _physical_drive_index
+
+pytestmark = pytest.mark.skipif(sys.platform != "win32", reason="drives.py imports win32com/pythoncom at module level")
 
 
 def test_infer_media_type_from_model_string():

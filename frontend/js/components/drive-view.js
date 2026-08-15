@@ -132,9 +132,11 @@ class DriveView extends HTMLElement {
           : "";
         const sparkline = renderSparkline(hist);
 
+        const bootBadge = drive.is_boot ? `<span class="badge info" style="margin-left:auto">Boot</span>` : "";
+
         return `
           <div class="card">
-            <p class="card-title"><svg width="16" height="16"><use href="#icon-drive"/></svg> ${escapeHtml(drive.model)}</p>
+            <p class="card-title"><svg width="16" height="16"><use href="#icon-drive"/></svg> ${escapeHtml(drive.model)}${bootBadge}</p>
             <p class="card-subtitle">${escapeHtml(drive.bus_type)} &middot; ${escapeHtml(drive.media_type)} &middot; ${bytesToGB(drive.size)} GB</p>
             ${sparkline ? `<div style="margin-bottom:var(--space-2)">${sparkline}${activityLine}</div>` : ""}
             ${partitions || '<p class="card-subtitle">No mounted partitions.</p>'}

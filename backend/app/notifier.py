@@ -5,7 +5,10 @@ non-Windows)."""
 
 from __future__ import annotations
 
+from .logging_setup import get_logger
 from .paths import ICON_PATH
+
+logger = get_logger("notifier")
 
 
 class Notifier:
@@ -23,13 +26,16 @@ class Notifier:
     def notify_predicted_failure(self, model: str, reason: str) -> None:
         self._send("DiskInfo - Drive health warning", f"{model}: predicted failure ({reason}).")
 
+    def notify_high_temperature(self, model: str, temperature_c: int, threshold_c: int) -> None:
+        self._send("DiskInfo - Drive temperature warning", f"{model} is at {temperature_c}°C (threshold {threshold_c}°C).")
+
     def _send(self, title: str, message: str) -> None:
+        logger.info("%s: %s", title, message)
         if self._Notification is None:
-            print(f"[notify] {title}: {message}")
             return
         try:
             icon = str(ICON_PATH) if ICON_PATH.exists() else ""
             toast = self._Notification(app_id="DiskInfo", title=title, msg=message, icon=icon)
             toast.show()
-        except Exception as exc:
-            print(f"[notify:fallback] {title}: {message} ({exc})")
+        except Exception:
+            logger.exception("toast notification failed: %s: %s", title, message)
